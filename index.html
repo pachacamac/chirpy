@@ -10,7 +10,8 @@ nothing yet
 <script src="chirpy.js"></script>
 <script>
   var chirpy = Chirpy();
+  chirpy.init(function(){ chirpy.listen(function(e){ console.log(e); })});
 </script>
-<!-- <button id="test">test</button> -->
+<button onclick="chirpy.send(chirpy.convertData('HI'));">test send: HI (4,8,4,9)</button>
 </body>
 </html>

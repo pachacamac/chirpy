@@ -1,7 +1,6 @@
 var Chirpy = (function(options){
   var audioStream, audioContext, gainNode, analyser, fft;
-  var f=1;
-  var freqs = [697*f,770*f,852*f,941*f, 1209*f,1336*f,1477*f,1633*f], oscillators = [];
+  var freqs = [697,770,852,941, 1209,1336,1477,1633], oscillators = [];
 
   var _init = function(stream){
     audioContext = new AudioContext() || new webkitAudioContext() || new mozAudioContext();
@@ -23,7 +22,7 @@ var Chirpy = (function(options){
   };
 
   var setHalfByte = function(hb){
-    var fxi = Math.floor(hb/4)+4, fyi = hb%4;
+    var fyi = hb%4, fxi = Math.floor(hb/4)+4;
     for(var i=0; i<oscillators.length; i++) oscillators[i].disconnect();
     if(hb<0||hb>15)return;
     oscillators[fxi].connect(gainNode);
@@ -36,30 +35,51 @@ var Chirpy = (function(options){
   };
 
   var listen = function(cb){
-    // window.requestAnimationFrame(function(){listen(cb);});
-    // fft = new Uint8Array(analyser.frequencyBinCount);
-    // analyser.getByteFrequencyData(fft);
-    // var f = fft.length / 22000;
-    // var chanBandwidth = ((Math.floor(maxFreq*f) - Math.floor(minFreq*f)) / freqChannels);
-    // //minFreq = 4000, maxFreq = 8000, freqChannels = 17;
-    // var maxi1 = -100, max1 = 150; //threshold
-    // var maxi2 = -100, max2 = 150; //threshold
-    // for(var i=Math.floor(minFreq*f); i<Math.floor(maxFreq*f);i+=1){
-    //   if(fft[i]>max1 && Math.abs(fft[i] - max2) > chanBandwidth){
-    //     max1 = fft[i];
-    //     maxi1 = i + chanBandwidth;
-    //   }else if(fft[i]>max2 && Math.abs(fft[i] - max1) > chanBandwidth){
-    //     max2 = fft[i];
-    //     maxi2 = i + chanBandwidth;
-    //   }
-    // }
-    // if(maxi1 > -1 && maxi2 > -1){
-    //   var chan1 = Math.floor((maxi1 - Math.floor(minFreq*f)) / chanBandwidth),
-    //       chan2 = Math.floor((maxi2 - Math.floor(minFreq*f)) / chanBandwidth),
-    //       chan;
-    //   chan = chan1==16 || chan1==17 ? chan2 : chan1;
-    //   cb(chan);
-    // }
+    window.requestAnimationFrame(function(){listen(cb);});
+    fft = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(fft);
+    var f = fft.length / 22000;
+    //f = 1024/22000 = 21.4
+    // bin: 697/21.4 fft[bin] -> power bei 697 Hz
+    var max_row_power = -1, max_col_power = -1, s_max_row_power = -1, s_max_col_power = -1;
+    var max_row_index = -1, max_col_index = -1;
+
+    for (var i = 0; i < freqs.length; i++) {
+      var power = fft[Math.floor(freqs[i]*f)];
+      // rows
+      if(i >= 0 && i < 4){
+        if(power >= max_row_power){
+          max_row_power = power;
+          max_row_index = i;
+        }
+        else if(power > s_max_row_power){ // power < max_row_power
+          s_max_row_power = power;
+        }
+      }
+      // cols
+      else {
+        if(power >= max_col_power){
+          max_col_power = power;
+          max_col_index = i;
+        }
+        else if(power > s_max_col_power){ // power < max_col_power
+          s_max_col_power = power;
+        }
+      }
+    };
+
+    var delta = 50;
+    //    0    1    2    3   freqs[0]
+    //    4    5    6    7   freqs[1]
+    //    8    9   10   11   freqs[2]
+    //   12   13   14   15   freqs[3]
+    // f[4] f[5] f[6] f[7]
+    // (col%4)+(row*4)
+
+    if(max_row_power - s_max_row_power > delta && max_col_power - s_max_col_power > delta){
+      console.log(max_row_index, max_col_index);
+      cb((max_col_index % 4) + (max_row_index * 4));
+    }
   };
 
   var convertData = function(str){
@@ -83,7 +103,7 @@ var Chirpy = (function(options){
   var send = function(data){
     if(data.length==0) return;
     setHalfByte(data.shift());
-    setTimeout(function(){send(data)}, 40);
+    setTimeout(function(){send(data)}, 125);
   };
 
   var init = function(cb){

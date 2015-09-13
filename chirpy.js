@@ -1,6 +1,7 @@
 var Chirpy = (function(options){
   var audioStream, audioContext, gainNode, analyser, fft, lastSignal;
-  var freqs = [697,770,852,941, 1209,1336,1477,1633], oscillators = [];
+  var F=3.5;
+  var freqs = [697*F,770*F,852*F,941*F, 1209*F,1336*F,1477*F,1633*F];
 
   var _init = function(stream){
     audioContext = new AudioContext() || new webkitAudioContext() || new mozAudioContext();
@@ -10,28 +11,28 @@ var Chirpy = (function(options){
     gainNode = audioContext.createGain ? audioContext.createGain() : audioContext.createGainNode();
     gainNode.gain.value = 0.25; //volume
     gainNode.connect(audioContext.destination);
-    //create one oscillator per frequency that we're going to use
-    for(var i=0; i<freqs.length; i++){
-      var osci = audioContext.createOscillator();
-      osci.type = "sine";
-      osci.start ? osci.start(0) : osci.noteOn(0);
-      osci.frequency.value = freqs[i];
-      oscillators.push(osci);
-    }
     console.log("init done");
   };
 
-  var setHalfByte = function(hb){
-    var fxi = hb%4, fyi = Math.floor(hb/4)+4;
-    for(var i=0; i<oscillators.length; i++) oscillators[i].disconnect();
+  var tone = function(freq, duration){
+    var osci = audioContext.createOscillator();
+    osci.type = "sine";
+    osci.frequency.value = freq;
+    osci.connect(gainNode);
+    var t = audioContext.currentTime;
+    osci.start(t);
+    osci.stop(t+duration/1000);
+  };
+
+  var setHalfByte = function(hb, duration){
     if(hb<0||hb>15)return;
-    oscillators[fxi].connect(gainNode);
-    oscillators[fyi].connect(gainNode);
+    var fxi = hb%4, fyi = Math.floor(hb/4)+4;
+    tone(freqs[fxi], duration);
+    tone(freqs[fyi], duration);
   };
 
   var setByte = function(b){
-    // for(var i=0; i<oscillators.length; i++) oscillators[i].disconnect();
-    // oscillators[b].connect(gainNode);
+    //TODO
   };
 
   var listen = function(cb){
@@ -87,53 +88,34 @@ var Chirpy = (function(options){
     setTimeout(function(){listen(cb);}, 1);
   };
 
-  var convertData = function(str){
-    // var data = [], b, h1, h2, a, baseArray = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-    // data.push(baseArray);
-    // for(var i=0; i<str.length; i++){
-    //   b = str.charCodeAt(i);
-    //   h1 = b >> 4 & 0x0f;
-    //   h2 = b & 0x0f;
-    //   a = baseArray.slice();
-    //   a[h1] = 1; a[16] = 1;
-    //   data.push(a);
-    //   a = baseArray.slice();
-    //   a[h2] = 1; a[17] = 1;
-    //   data.push(a);
-    // }
-    // data.push(baseArray);
-    // return data;
-  };
-
   var send = function(data){
     if(data.length==0) return;
-    setHalfByte(data.shift());
-    setTimeout(function(){send(data)}, 40);
+    setHalfByte(data.shift(), 50);
+    setTimeout(function(){send(data)}, 150);
   };
 
   var init = function(cb){
     navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-    navigator.getMedia({"audio": {
+    var opts = {
                 "mandatory": {
-                    "googEchoCancellation": "false",
+                    "googEchoCancellation": "true",
                     "googAutoGainControl": "false",
                     "googNoiseSuppression": "false",
                     "googHighpassFilter": "false"
                 },
                 "optional": []
-            }}, function(stream){_init(stream); cb();}, function(error){
-      console.log("error: " + err);
+            };
+    navigator.getMedia({"audio": opts}, function(stream){_init(stream); cb();}, function(error){
+      console.log("error: " + error);
     });
   };
 
 
   return {
     init: init,
-    //setState: setState,
-    //setByte: setByte,
     listen: listen,
-    //convertData: convertData,
-    send: send
+    send: send,
+    tone: tone
   };
 
 });

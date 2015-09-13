@@ -8,7 +8,7 @@ var Chirpy = (function(options){
     analyser = audioContext.createAnalyser();
     audioStream.connect(analyser);
     gainNode = audioContext.createGain ? audioContext.createGain() : audioContext.createGainNode();
-    gainNode.gain.value = 0.15; //volume
+    gainNode.gain.value = 0.25; //volume
     gainNode.connect(audioContext.destination);
     //create one oscillator per frequency that we're going to use
     for(var i=0; i<freqs.length; i++){
@@ -108,7 +108,7 @@ var Chirpy = (function(options){
   var send = function(data){
     if(data.length==0) return;
     setHalfByte(data.shift());
-    setTimeout(function(){send(data)}, 125);
+    setTimeout(function(){send(data)}, 40);
   };
 
   var init = function(cb){

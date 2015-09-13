@@ -22,7 +22,7 @@ var Chirpy = (function(options){
   };
 
   var setHalfByte = function(hb){
-    var fyi = hb%4, fxi = Math.floor(hb/4)+4;
+    var fxi = hb%4, fyi = Math.floor(hb/4)+4;
     for(var i=0; i<oscillators.length; i++) oscillators[i].disconnect();
     if(hb<0||hb>15)return;
     oscillators[fxi].connect(gainNode);
@@ -38,32 +38,32 @@ var Chirpy = (function(options){
     window.requestAnimationFrame(function(){listen(cb);});
     fft = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(fft);
-    var f = fft.length / 22000;
-    //f = 1024/22000 = 21.4
+    var f = 22000/fft.length;
+    //f = 22000/fft.length = 21.4
     // bin: 697/21.4 fft[bin] -> power bei 697 Hz
     var max_row_power = -1, max_col_power = -1, s_max_row_power = -1, s_max_col_power = -1;
     var max_row_index = -1, max_col_index = -1;
 
     for (var i = 0; i < freqs.length; i++) {
-      var power = fft[Math.floor(freqs[i]*f)];
+      var power = fft[Math.round(freqs[i]/f)];
       // rows
-      if(i >= 0 && i < 4){
-        if(power >= max_row_power){
-          max_row_power = power;
-          max_row_index = i;
-        }
-        else if(power > s_max_row_power){ // power < max_row_power
-          s_max_row_power = power;
-        }
-      }
-      // cols
-      else {
+      if(i < 4){
         if(power >= max_col_power){
           max_col_power = power;
           max_col_index = i;
         }
-        else if(power > s_max_col_power){ // power < max_col_power
+        else if(power > s_max_col_power){ // power < max_row_power
           s_max_col_power = power;
+        }
+      }
+      // cols
+      else {
+        if(power >= max_row_power){
+          max_row_power = power;
+          max_row_index = i;
+        }
+        else if(power > s_max_row_power){ // power < max_col_power
+          s_max_row_power = power;
         }
       }
     };
@@ -78,7 +78,7 @@ var Chirpy = (function(options){
 
     if(max_row_power - s_max_row_power > delta && max_col_power - s_max_col_power > delta){
       console.log(max_row_index, max_col_index);
-      cb((max_col_index % 4) + (max_row_index * 4));
+      cb((max_col_index % 4) + (max_row_index * 4)-16);
     }
   };
 

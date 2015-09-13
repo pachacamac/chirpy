@@ -4,26 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no">
   <title>Chirpy</title>
+  <style>
+    button{font-family: monospace;}
+  </style>
 </head>
 <body>
-nothing yet
 <script src="chirpy.js"></script>
 <script>
   var chirpy = Chirpy();
   chirpy.init(function(){ chirpy.listen(function(e){ console.log(e); })});
 </script>
 <button onclick="chirpy.send([0,-1,1,-1,2,-1,3,-1,4,-1,5,-1,6,-1,7,-1,8,-1,9,-1,10,-1,11,-1,12,-1,13,-1,14,-1,15,-1]);">test</button>
+<br><br>
 <div>
-<button onclick="chirpy.send([0,-1]);">0</button>
-<button onclick="chirpy.send([1,-1]);">1</button>
-<button onclick="chirpy.send([2,-1]);">2</button>
-<button onclick="chirpy.send([3,-1]);">3</button><br>
-<button onclick="chirpy.send([4,-1]);">4</button>
-<button onclick="chirpy.send([5,-1]);">5</button>
-<button onclick="chirpy.send([6,-1]);">6</button>
-<button onclick="chirpy.send([7,-1]);">7</button><br>
-<button onclick="chirpy.send([8,-1]);">8</button>
-<button onclick="chirpy.send([9,-1]);">9</button>
+<button onclick="chirpy.send([0,-1]);">&nbsp;0</button>
+<button onclick="chirpy.send([1,-1]);">&nbsp;1</button>
+<button onclick="chirpy.send([2,-1]);">&nbsp;2</button>
+<button onclick="chirpy.send([3,-1]);">&nbsp;3</button><br>
+<button onclick="chirpy.send([4,-1]);">&nbsp;4</button>
+<button onclick="chirpy.send([5,-1]);">&nbsp;5</button>
+<button onclick="chirpy.send([6,-1]);">&nbsp;6</button>
+<button onclick="chirpy.send([7,-1]);">&nbsp;7</button><br>
+<button onclick="chirpy.send([8,-1]);">&nbsp;8</button>
+<button onclick="chirpy.send([9,-1]);">&nbsp;9</button>
 <button onclick="chirpy.send([10,-1]);">10</button>
 <button onclick="chirpy.send([11,-1]);">11</button><br>
 <button onclick="chirpy.send([12,-1]);">12</button>

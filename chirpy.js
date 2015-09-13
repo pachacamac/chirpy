@@ -8,7 +8,7 @@ var Chirpy = (function(options){
     analyser = audioContext.createAnalyser();
     audioStream.connect(analyser);
     gainNode = audioContext.createGain ? audioContext.createGain() : audioContext.createGainNode();
-    gainNode.gain.value = 0.15; //volume
+    gainNode.gain.value = 0.25; //volume
     gainNode.connect(audioContext.destination);
     //create one oscillator per frequency that we're going to use
     for(var i=0; i<freqs.length; i++){
@@ -22,7 +22,7 @@ var Chirpy = (function(options){
   };
 
   var setHalfByte = function(hb){
-    var fyi = hb%4, fxi = Math.floor(hb/4)+4;
+    var fxi = hb%4, fyi = Math.floor(hb/4)+4;
     for(var i=0; i<oscillators.length; i++) oscillators[i].disconnect();
     if(hb<0||hb>15)return;
     oscillators[fxi].connect(gainNode);
@@ -35,7 +35,7 @@ var Chirpy = (function(options){
   };
 
   var listen = function(cb){
-    window.requestAnimationFrame(function(){listen(cb);});
+    //window.requestAnimationFrame(function(){listen(cb);});
     fft = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(fft);
     var f = fft.length / 22000;
@@ -80,6 +80,7 @@ var Chirpy = (function(options){
       console.log(max_row_index, max_col_index);
       cb((max_col_index % 4) + (max_row_index * 4));
     }
+    setTimeout(function(){listen(cb);}, 1);
   };
 
   var convertData = function(str){
@@ -103,7 +104,7 @@ var Chirpy = (function(options){
   var send = function(data){
     if(data.length==0) return;
     setHalfByte(data.shift());
-    setTimeout(function(){send(data)}, 125);
+    setTimeout(function(){send(data)}, 40);
   };
 
   var init = function(cb){

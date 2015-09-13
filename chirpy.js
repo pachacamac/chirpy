@@ -1,5 +1,5 @@
 var Chirpy = (function(options){
-  var audioStream, audioContext, gainNode, analyser, fft;
+  var audioStream, audioContext, gainNode, analyser, fft, lastSignal;
   var freqs = [697,770,852,941, 1209,1336,1477,1633], oscillators = [];
 
   var _init = function(stream){
@@ -35,7 +35,7 @@ var Chirpy = (function(options){
   };
 
   var listen = function(cb){
-    window.requestAnimationFrame(function(){listen(cb);});
+    //window.requestAnimationFrame(function(){listen(cb);});
     fft = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(fft);
     var f = 22000/fft.length;
@@ -68,7 +68,7 @@ var Chirpy = (function(options){
       }
     };
 
-    var delta = 50;
+    var delta = 60;
     //    0    1    2    3   freqs[0]
     //    4    5    6    7   freqs[1]
     //    8    9   10   11   freqs[2]
@@ -76,10 +76,15 @@ var Chirpy = (function(options){
     // f[4] f[5] f[6] f[7]
     // (col%4)+(row*4)
 
-    if(max_row_power - s_max_row_power > delta && max_col_power - s_max_col_power > delta){
-      console.log(max_row_index, max_col_index);
-      cb((max_col_index % 4) + (max_row_index * 4)-16);
+    if((max_row_power - s_max_row_power) > delta && (max_col_power - s_max_col_power) > delta){
+      lastSignal = (max_col_index % 4) + (max_row_index * 4)-16;
+    } else {
+      if(lastSignal !== null){
+        cb(lastSignal);
+        lastSignal = null;
+      }
     }
+    setTimeout(function(){listen(cb);}, 1);
   };
 
   var convertData = function(str){
@@ -108,10 +113,19 @@ var Chirpy = (function(options){
 
   var init = function(cb){
     navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-    navigator.getMedia({audio: true}, function(stream){_init(stream); cb();}, function(error){
+    navigator.getMedia({"audio": {
+                "mandatory": {
+                    "googEchoCancellation": "false",
+                    "googAutoGainControl": "false",
+                    "googNoiseSuppression": "false",
+                    "googHighpassFilter": "false"
+                },
+                "optional": []
+            }}, function(stream){_init(stream); cb();}, function(error){
       console.log("error: " + err);
     });
   };
+
 
   return {
     init: init,
